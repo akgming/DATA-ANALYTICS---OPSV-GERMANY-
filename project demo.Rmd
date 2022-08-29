@@ -1,0 +1,273 @@
+---
+title: "OPSD GERMANY DATA SET OF ELECTRICITY CONSUMPTION"
+author: "anit"
+date: "2022-08-29"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## The DATA SET : Open Power Systems Data
+
+We'll be working with daily time series of Open Power System Data (OPSD)
+for Germany, which has been rapidly expanding its renewable energy
+production in recent years. The data set includes country-wide totals of
+electricity consumption, wind power production, and solar power
+production for 2006-2017. link for the data [click
+here](https://raw.githubusercontent.com/jenfly/opsd/master/opsd_germany_daily.csv)
+
+### The columns of the data file are:
+
+-   Date --- The date (yyyy-mm-dd format)
+-   Consumption --- Electricity consumption in GWh
+-   Wind --- Wind power production in GWh
+-   Solar --- Solar power production in GWh
+-   Wind+Solar --- Sum of wind and solar power production in GWh
+
+##We will explore how electricity consumption and production in Germany
+have varied over time :
+
+-   When is electricity consumption typically highest and lowest?
+
+-   How do wind and solar power production vary with seasons of the
+    year?
+
+-   What are the long-term trends in electricity consumption, solar
+    power, and wind power?
+
+## CREATING THE DATAFRAME FROM DATA
+
+```{r dataframe, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(readxl)
+library(tidyverse)
+mydata <- read_excel("E:/R/OPSV_GERMANY.xlsx")
+View(mydata)
+```
+
+#looking at head and tail of dataframe
+
+```{r}
+head(mydata)
+tail(mydata)
+```
+
+#adding year date month from dataset
+
+```{r}
+x<-mydata$Date
+
+year<-as.numeric(format(x,"%Y"))
+View(year)
+
+month <- as.numeric(format(x,"%m"))
+
+day<-as.numeric(format(x,"%d"))
+
+head(month)
+```
+
+#add these 3 colom in dataset
+
+```{r}
+newdata<- cbind(mydata,year,month,day)
+head(newdata)
+```
+
+#changing data types for usage in plots
+
+```{r}
+newdata$Date<- as.Date(newdata$Date)
+newdata$Consumption<-as.numeric(newdata$Consumption)
+newdata$Wind<-as.numeric(newdata$Wind)
+newdata$Solar<-as.numeric(newdata$Solar)
+newdata$`Wind+Solar`<-as.numeric(newdata$`Wind+Solar`)
+summary(newdata)
+```
+
+#comsumption over years
+
+```{r}
+library(ggplot2)
+ggplot(data=newdata)+geom_line(mapping=aes(x=Date,y=Consumption),colour="blue") + labs(title = "Consumption and date relation")+ labs(subtitle = "diff year different color") +labs(y="Consumption in GWh")+labs(x="date")
+
+ggplot(data=newdata)+geom_line(mapping=aes(x=Date,y=Wind),colour="red") + labs(title = "Wind power production over years")+ labs(subtitle = "diff year different color") +labs(y="Wind energy in GWh")+labs(x="date")
+ggplot(data=newdata)+geom_line(mapping=aes(x=Date,y=Solar),colour = "green") + labs(title = "Solar production over years")+ labs(subtitle = "diff year different color") +labs(y="Energy in GWh")+labs(x="date")
+```
+
+We don't get not much of data from this plot as all are line points We
+then use the point plot.
+
+```{r}
+library(ggpubr)
+ggplot(data=newdata)+geom_point(mapping=aes(x=Date,y=Consumption,color=year),colour="orange") + labs(title = "Consumption and date relation")+labs(y="Consumption in GWh")+labs(x="date")
+ggplot(data=newdata)+geom_point(mapping=aes(x=Date,y=Wind),colour="red") + labs(title = "Wind power production over years")  +labs(y="Wind energy in GWh")+labs(x="date")
+
+ggplot(data=newdata)+geom_point(mapping=aes(x=Date,y=Solar),color="green") + labs(title = "Solar production over years")  +labs(y="Energy in GWh")+labs(x="date")
+
+
+```
+
+### To see trend in a year let's see a part of 2 years from the dataset (using filter)
+
+```{r}
+newdata %>% filter(Date>="2011-12-04"& Date<="2013-02-04")  %>%  ggplot()+geom_line(mapping=aes(x=Date,y=Consumption),colour="blue") +labs(title = "electricity consumption between 2011-12-04 and 2013-02-04 ")
+
+newdata %>% filter(Date>="2006-12-04"& Date<="2008-02-04")  %>%  ggplot()+geom_line(mapping=aes(x=Date,y=Consumption),colour="blue") +labs(title = "electricity consumption between 2006-12-04 and 2008-02-04 ")
+```
+
+### From the consumption data between 2011-12-04 and 2013-02-04 and between 2006-12-04 and 2008-02-04 It can be noted:
+
+-   In summer the comsumption in both timeline decreases
+
+-   during Winter the usage of electricity increases.(mostly due to
+    heater usage)
+
+-   there are significant drop of uasge during winter holiday (ie during
+    Christmas and new year eve)
+
+-   from the below point plot of consumption history between 2011-12-04
+    and 2016-02-04 it is seen the consumption splits into 2 clusters.
+    one around 1400 GWh and another around 1100 GWh and oscillates
+    around these two values.(during weekands and weekdays )
+
+```{r}
+newdata %>% filter(Date>="2011-12-04"& Date<="2016-02-04")  %>%  ggplot()+geom_point(mapping=aes(x=Date,y=Consumption),colour="blue") +labs(title = "electricity consumption between 2011-12-04 and 2016-02-04 ")+ labs(subtitle = "to find relevant pattern in consumption")
+
+```
+
+#about the solar power production variation lets take a different
+timespan
+
+```{r}
+newdata %>% filter(Date>="2011-12-04"& Date<="2014-02-04")  %>%  ggplot()+geom_point(mapping=aes(x=Date,y=Solar),colour="blue") +labs(title = "electricity production by solar between 2011-12-04 and 2014-02-04 ")
+
+```
+
+###conclusion: Solar power production is highest in time of Summer of
+the season(june-july) and lowest in the winter time of the year.
+
+### to find similar pattern in Wind energy production
+
+```{r}
+newdata %>% filter(Date>="2011-12-04"& Date<="2013-02-04")  %>%  ggplot()+geom_line(mapping=aes(x=Date,y=Wind),colour="blue") +labs(title = "electricity production by Wind between 2011-12-04 and 2013-02-04 ")+labs(subtitle = "line plot")
+newdata %>% filter(Date>="2011-12-04"& Date<="2013-02-04")  %>%  ggplot()+geom_point(mapping=aes(x=Date,y=Wind),colour="blue") +labs(title = "electricity production by Wind between 2011-12-04 and 2013-02-04 ") +  labs(subtitle = "point plot")
+
+```
+
+#### conclusion:
+
+-   Wind power production maxes out in Winter min in Summer
+
+moreover from the whole data plot of Wind production:
+
+```{r}
+ggplot(data=newdata)+geom_line(mapping=aes(x=Date,y=Wind),colour="red") + labs(title = "Wind power production over years")  +labs(y="Wind energy in GWh")+labs(x="date")
+```
+
+**Over the years starting from 2010 the amount of energy production
+gradually increases**
+
+##CONCLUSIONS: \* there are periodicity happening in all three
+parameters CONSUMPTION,WIND POWER PRODUCTION,SOLAR POWER PRODUCTION in
+span of a year. \*all three time series clearly exhibit
+periodicity---often referred to as seasonality in time series
+analysis---in which a pattern repeats again and again at regular time
+intervals. The Consumption, Solar, and Wind time series oscillate
+between high and low values on a yearly time scale, corresponding with
+the seasonal changes in weather over the year.
+
+#### let's further look into monhly data and see how data varies over days of the month
+
+```{r}
+newdata %>% filter(Date>="2017-01-04"& Date<="2018-01-04")  %>%  ggplot()+geom_line(mapping=aes(x=Date,y=Consumption),colour="blue") +labs(title = "electricity consumption between 2017-01-04 and 2018-01-04 ") +labs(subtitle = "a year's data of consumption in GWh")
+
+
+```
+
+```{r}
+newdata %>% filter(Date>="2017-01-01"& Date<="2017-03-04")  %>%  ggplot()+geom_line(mapping=aes(x=Date,y=Consumption),colour="blue") +geom_point(mapping=aes(x=Date,y=Consumption),colour="red") +labs(title = "electricity consumption between 2017-01-04 and 2017-03-04 ") +labs(subtitle = "2 month's  data of consumption in GWh")
+```
+
+**As we suspected, consumption is highest on weekdays and lowest on
+weekends.**
+
+##Seasonality
+
+Next, let's further explore the seasonality of our data with box plots
+
+```{r}
+h1<-ggplot(data=newdata) +geom_boxplot(aes(group=month,x=month, y= Consumption),fill="yellow")+labs(title = "Consumption") +scale_x_continuous(breaks=c(1:12))
+  
+h2<-ggplot(data=newdata) +geom_boxplot(aes(group=month,x=month, y= Wind),fill="yellow")+scale_x_continuous(breaks=c(1:12)) 
+h3<-ggplot(data=newdata) +geom_boxplot(aes(group=month,x=month, y= Solar),fill="orange")+ labs(x="month")+scale_x_continuous(breaks=c(1:12))
+ggarrange(h1,h2,h3,ncol=1,nrow=3)
+```
+
+These box plots confirm the yearly seasonality that we saw in earlier
+plots and provide some additional insights: \* electricity consumption
+is generally higher in winter and lower in summer, the median and lower
+two quartiles are lower in December and January compared to other
+months. likely due to businesses being closed over the holidays. We saw
+this in the time series for the year 2017, that for some points in JAN
+and DEC there are consumptions much lower with respect to other points.
+
+-   solar and wind power production both exhibit a yearly seasonality,
+    the wind power distributions have many more outliers, reflecting the
+    effects of occasional extreme wind speeds associated with storms and
+    other transient weather conditions. ***points exiting the range of
+    Q3+1.5 of IQR***
+
+###Next, let's group the electricity consumption time series by day of
+the week, to explore weekly seasonality.
+
+For that we need to enter the weekdays of the given data set
+
+```{r}
+weekday<-weekdays(newdata$Date)
+newdata<-cbind(newdata,weekday)
+
+newdata$weekday <- factor(newdata$weekday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+```
+
+```{r}
+newdata %>% filter(year=="2017") %>% ggplot() +geom_boxplot(aes(group=weekday,x=weekday, y= Consumption,fill=weekday))+labs(title = "box plot of consumption data by Weekdays of the Year 2017")
+```
+
+As expected, electricity consumption is significantly higher on weekdays
+than on weekends. The low outliers on weekdays are presumably during
+holidays.
+
+```{r}
+library(dplyr)
+library(zoo)
+library(dplyr)
+library(zoo)
+test1data<- newdata  %>% arrange(day)%>% arrange(month) %>% arrange(year)  %>%  mutate(avg_of_7 =rollmean(Consumption,k=7,fill = NA) ) 
+View(test1data)
+```
+
+```{r}
+test2data<- test1data  %>% arrange(day)%>% arrange(month) %>% arrange(year)  %>%  mutate(avg_of_3 =rollmean(Consumption,k=3,fill = NA)) 
+View(test2data)
+```
+
+```{r}
+testdata<- test2data  %>% arrange(day)%>% arrange(month) %>% arrange(year)  %>%  mutate(avg_of_365 =rollmean(Consumption,k=365,fill = NA)) 
+View(testdata)
+```
+
+### trend of rollMeans of 7,3,365 days
+
+```{r}
+data_new<- data.frame(x=testdata$Date,y=c(testdata$avg_of_7,testdata$avg_of_3,testdata$avg_of_365),group=c(rep("avg_of_7",nrow(testdata)),rep("avg_of_3",nrow(testdata)),rep("avg_of_365",nrow(testdata))))
+
+ggplot(data=data_new) +geom_line(mapping = aes(x,y,col=group))+scale_colour_manual(values=c("avg_of_7"="green", "avg_of_3"="blue", "avg_of_365"="white"), 
+                                                                                   labels=c("avg_of_7", "avg_of_3", "avg_of_365"))+xlab("Date")+ylab("GWh")
+
+
+```
+
+Conclusion from the trend: \* the 3 and 7 day mean data of consumption
+is still fluctuating in nature \* the 365 days rollMean/continous mean
+is still having almost similar range of results throughout the data
+cycle
